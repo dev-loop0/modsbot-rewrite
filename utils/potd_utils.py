@@ -7,7 +7,7 @@ from typing import Optional
 import aiohttp
 import discord
 
-from cogs import config as cfg
+from cogs import config as cfg, settings
 
 POTD_RANGE = "POTD!A2:S"
 CURATOR_RANGE = "Curators!A3:E"
@@ -179,14 +179,14 @@ async def fetch(ctx, number: int, flag: str = ""):
                         "<@"
                         + str(cfg.Config.config["paradox_id"])
                         + ">\n"
-                        + texify_potd(potd_row)
+                        + texify_potd(potd_row, await settings.get_setting(ctx, 'indents'))
                     )
                 else:
                     output = (
                         "<@"
                         + str(cfg.Config.config["paradox_id"])
                         + ">texsp\n||"
-                        + texify_potd(potd_row)
+                        + texify_potd(potd_row, await settings.get_setting(ctx, 'indents'))
                         + "||"
                     )
                 await ctx.send(output, delete_after=5)
@@ -204,7 +204,7 @@ def check_for_image_link(potd_row) -> Optional[str]:
         return None
 
 
-def texify_potd(potd_row) -> str:
+def texify_potd(potd_row, indents) -> str:
     return (
         "```tex\n\\textbf{Day "
         + str(potd_row[cfg.Config.config["potd_sheet_id_col"]])
@@ -212,7 +212,10 @@ def texify_potd(potd_row) -> str:
         + str(potd_row[cfg.Config.config["potd_sheet_day_col"]])
         + " "
         + str(potd_row[cfg.Config.config["potd_sheet_date_col"]])
-        + "\\vspace{11pt}\\\\\\setlength\\parindent{1.5em}"
+        + "\\vspace{11pt}\\\\"
+        + ("\\setlength\\parindent{1.5em}" if indents == "on"
+           # from https://web.evanchen.cc/faq-latex.html#L-18
+           else "\\setlength{\\parskip}{1.3ex}\\setlength{\\parindent}{0pt}")
         + str(potd_row[cfg.Config.config["potd_sheet_statement_col"]])
         + "```"
     )
