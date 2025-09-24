@@ -120,12 +120,12 @@ class MODSBot(commands.Bot):
                 delta = datetime.now() - now
                 self.logger.info(f"Loaded cog {cog:<20} in {int(delta.total_seconds() * 1e3) / 1e3:.3f} seconds.")
 
-        # MODS_SERVER = discord.Object(id=self.config["mods_guild"])
-        # self.tree.copy_global_to(guild=MODS_SERVER)
-        # await self.tree.sync(guild=MODS_SERVER)
+        MODS_SERVER = discord.Object(id=self.config["mods_guild"])
+        self.tree.copy_global_to(guild=MODS_SERVER)
+        await self.tree.sync(guild=MODS_SERVER)
         await self.tree.sync()
 
-        # await self.get_channel(self.config["tech_garage"]).send("MODSbot loaded")
+        await self.get_channel(self.config["tech_garage"]).send("MODSbot loaded")
 
     async def on_message(self, message):
         if message.author.bot:
