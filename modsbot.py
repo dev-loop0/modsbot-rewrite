@@ -118,7 +118,10 @@ class MODSBot(commands.Bot):
                 self.logger.exception(f"Failed to load cog {cog}.")
             else:
                 delta = datetime.now() - now
-                self.logger.info(f"Loaded cog {cog:<20} in {int(delta.total_seconds() * 1e3) / 1e3:.3f} seconds.")
+                self.logger.info(
+                    f"Loaded cog {cog:<20} in"
+                    f"{int(delta.total_seconds() * 1e3) / 1e3:.3f} seconds."
+                )
 
         MODS_SERVER = discord.Object(id=self.config["mods_guild"])
         self.tree.copy_global_to(guild=MODS_SERVER)
