@@ -5,7 +5,6 @@ import sqlite3
 import threading
 import time
 import traceback
-from datetime import datetime
 
 import discord
 import matplotlib
@@ -112,16 +111,11 @@ class MODSBot(commands.Bot):
         # Load cogs
         for cog in self.config["cogs"]:
             try:
-                now = datetime.now()
                 await self.load_extension(cog)
             except Exception:
                 self.logger.exception(f"Failed to load cog {cog}.")
             else:
-                delta = datetime.now() - now
-                self.logger.info(
-                    f"Loaded cog {cog:<20} in"
-                    f"{int(delta.total_seconds() * 1e3) / 1e3:.3f} seconds."
-                )
+                self.logger.info(f"Loaded cog {cog}.")
 
         MODS_SERVER = discord.Object(id=self.config["mods_guild"])
         self.tree.copy_global_to(guild=MODS_SERVER)

@@ -101,8 +101,8 @@ well_manager_role: 887344625562558496
 problem_curator_role: 537768046903951370
 well_channel: 954687946697637908
 well_sheet: '1eI2PzhwFzPJKEXskpG_ynY1SZYCxpU8eK_zGUH5SMxE'
-starfishing_emoji: ':fish:'
-check_emoji: ':white_check_mark:'
+starfishing_emoji: '<:starfishing:763528284117008385>'
+check_emoji: '<:check:564272059610431508>'
 modsvote_default_days: 7
 contest_sheet: '1zP52G7-EsYT3TuL876kS2reGmv84V2JEoJbD5KvYcfE'
 contest_gold_role: 1159589417749598269
