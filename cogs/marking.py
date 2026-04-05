@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType
 
 from cogs import config as cfg
-from utils import potd_utils
+from utils import potd_utils, split_utils
 
 Cog = commands.Cog
 
@@ -789,24 +789,9 @@ class Marking(Cog):
 
     # send message in batches of 1900+e characters because of 2k character limit
     async def send_potd_solved(self, ctx, output_string):
-        i = 0
-        output_batch = ""
-        while i < len(output_string):
-            if output_batch == "":
-                jump = min(1900, len(output_string) - i)
-                output_batch += output_string[i : i + jump]
-                i += jump
-            else:
-                output_batch += output_string[i]
-                i += 1
-            if (
-                output_batch[-1] == ","
-                or output_batch[-1] == "]"
-                or len(output_batch) == 2000
-                or i == len(output_string)
-            ):  # we end a batch at "," or "]"
-                await ctx.send(output_batch)
-                output_batch = ""
+        batches = split_utils.split_with_limit(output_string, ",]", 1900)
+        for batch in batches:
+            await ctx.send(batch)
 
 
 async def setup(bot):

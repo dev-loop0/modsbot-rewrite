@@ -4,7 +4,7 @@ import schedule
 from discord.ext import commands
 
 from cogs import config as cfg
-from utils import potd_utils
+from utils import potd_utils, split_utils
 
 import re
 
@@ -102,28 +102,28 @@ class Proposals(Cog):
                     problem_info += f"\nProposer's message: {proposer_msg}\n"
                 print('hi')
                 await thread.send(problem_info)
-                await asyncio.sleep(1)
+                await asyncio.sleep(10)
 
                 await thread.send("Hint 1:")
                 await thread.send(
                     f"<@{cfg.Config.config['paradox_id']}> texsp\n"
                     f"||```latex\n{hint1}```||"
                 )
-                await asyncio.sleep(1)
+                await asyncio.sleep(10)
                 if hint2 not in ["", None]:
                     await thread.send("Hint 2:")
                     await thread.send(
                         f"<@{cfg.Config.config['paradox_id']}> texsp\n"
                         f"||```latex\n{hint2}```||"
                     )
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(10)
                 if hint3 not in ["", None]:
                     await thread.send("Hint 3:")
                     await thread.send(
                         f"<@{cfg.Config.config['paradox_id']}> texsp\n"
                         f"||```latex\n{hint3}```||"
                     )
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(10)
 
                 if solution not in ["", None]:
                     await thread.send("Solution:")
@@ -131,12 +131,12 @@ class Proposals(Cog):
                         f"<@{cfg.Config.config['paradox_id']}> texsp\n"
                         f"||```latex\n{solution}```||"
                     )
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(10)
 
                 if solution_link not in ["", None]:
                     solution_link_msg = f"\nSolution link: {solution_link}\n"
                     await thread.send(solution_link_msg)
-                    await asyncio.sleep(1)
+                    await asyncio.sleep(10)
 
                 # Mark problem as posted
                 # request = (
@@ -254,7 +254,6 @@ class Proposals(Cog):
     @commands.command(aliases=["myproposals"], brief="Checks your proposals.")
     async def potd_myproposals(self, ctx, user_id: str = ""):
         proposals = self.get_proposals()
-        print(user_id)
         if not user_id:
             user_id = str(ctx.author.id)
         else:
@@ -268,7 +267,6 @@ class Proposals(Cog):
         user_proposals = filter(lambda x: x[2] == user_id, proposals)
 
         # construct output
-        output = "# __Your proposals__\n"
         lines = []
         for proposal in user_proposals:
             line = ""
@@ -306,11 +304,13 @@ class Proposals(Cog):
             output += "No results match your query."
         else:
             lines.sort()
-            output += "```ansi\n"
-            output += "\n".join(lines)
-            output += "```"
+            batches = split_utils.split_with_limit("\n".join(lines), "\n", 1900)
+            for i in range(len(batches)):
+                batches[i] = "```ansi\n" + batches[i] + "```"
+            batches[0] = "# __Your proposals__\n" + batches[0]
+            for batch in batches:
+                await ctx.send(batch)
 
-        await ctx.send(output)
 
 
 async def setup(bot):
