@@ -189,7 +189,6 @@ class Misc(Cog):
     @commands.command()
     @commands.guild_only()
     async def lockout(self, ctx):
-
         role_id = cfg.Config.config.get("lock_in_role")
         if not role_id:
             await ctx.send("Focus role not configured")

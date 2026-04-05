@@ -1,13 +1,11 @@
 import asyncio
 
-import schedule
 from discord.ext import commands
 
 from cogs import config as cfg
 from utils import potd_utils, split_utils
 
 import re
-import argparse
 
 from enum import IntEnum
 
