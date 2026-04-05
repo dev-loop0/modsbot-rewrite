@@ -6,6 +6,8 @@ from discord.ext import commands
 from cogs import config as cfg
 from utils import potd_utils
 
+import re
+
 Cog = commands.Cog
 
 
@@ -13,16 +15,19 @@ class Proposals(Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-        schedule.every().hour.at("10:00").do(self.post_proposed_potd).tag(
-            "cogs.proposals"
-        )
+        # schedule.every().hour.at("10:00").do(self.post_proposed_potd).tag(
+        #     "cogs.proposals"
+        # )
 
     def post_proposed_potd(self):
         self.bot.loop.create_task(self.post_proposed_potd_task())
 
-    async def post_proposed_potd_task(self):
-        # Read from spreadsheet
-        proposed_problems = (
+    @commands.command(aliases=["idk"], brief="Checks proposals.")
+    async def check_proposals(self, ctx):
+        await self.post_proposed_potd_task()
+    
+    def get_proposals(self):
+        return (
             cfg.Config.service.spreadsheets()
             .values()
             .get(spreadsheetId=cfg.Config.config["potd_proposal_sheet"], range="A:P")
@@ -30,9 +35,16 @@ class Proposals(Cog):
             .get("values", [])
         )
 
+    async def post_proposed_potd_task(self):
+        # Read from spreadsheet
+        proposed_problems = self.get_proposals()
+
+        print(proposed_problems)
+
         for i, problem in enumerate(proposed_problems):
             # Find unposted problems
             if len(problem) < 14 or problem[13] == "":
+                print('pass', i, 'succeeded')
                 number = i
                 user = problem[1]
                 user_id = problem[2]
@@ -61,7 +73,7 @@ class Proposals(Cog):
                     solution_link = problem[12]
                 except Exception:
                     solution_link = ""
-
+                print('trying to post...')
                 # Post in forum
                 forum = self.bot.get_channel(cfg.Config.config["potd_proposal_forum"])
                 content = (
@@ -88,29 +100,30 @@ class Proposals(Cog):
                 )
                 if proposer_msg not in ["", None]:
                     problem_info += f"\nProposer's message: {proposer_msg}\n"
+                print('hi')
                 await thread.send(problem_info)
-                await asyncio.sleep(10)
+                await asyncio.sleep(1)
 
                 await thread.send("Hint 1:")
                 await thread.send(
                     f"<@{cfg.Config.config['paradox_id']}> texsp\n"
                     f"||```latex\n{hint1}```||"
                 )
-                await asyncio.sleep(10)
+                await asyncio.sleep(1)
                 if hint2 not in ["", None]:
                     await thread.send("Hint 2:")
                     await thread.send(
                         f"<@{cfg.Config.config['paradox_id']}> texsp\n"
                         f"||```latex\n{hint2}```||"
                     )
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(1)
                 if hint3 not in ["", None]:
                     await thread.send("Hint 3:")
                     await thread.send(
                         f"<@{cfg.Config.config['paradox_id']}> texsp\n"
                         f"||```latex\n{hint3}```||"
                     )
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(1)
 
                 if solution not in ["", None]:
                     await thread.send("Solution:")
@@ -118,51 +131,51 @@ class Proposals(Cog):
                         f"<@{cfg.Config.config['paradox_id']}> texsp\n"
                         f"||```latex\n{solution}```||"
                     )
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(1)
 
                 if solution_link not in ["", None]:
                     solution_link_msg = f"\nSolution link: {solution_link}\n"
                     await thread.send(solution_link_msg)
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(1)
 
                 # Mark problem as posted
-                request = (
-                    cfg.Config.service.spreadsheets()
-                    .values()
-                    .update(
-                        spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
-                        range=f"N{i+1}",
-                        valueInputOption="RAW",
-                        body={"range": f"N{i+1}", "values": [["Y"]]},
-                    )
-                )
-                request.execute()
+                # request = (
+                #     cfg.Config.service.spreadsheets()
+                #     .values()
+                #     .update(
+                #         spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
+                #         range=f"N{i+1}",
+                #         valueInputOption="RAW",
+                #         body={"range": f"N{i+1}", "values": [["Y"]]},
+                #     )
+                # )
+                # request.execute()
 
                 # Mark thread ID
-                request = (
-                    cfg.Config.service.spreadsheets()
-                    .values()
-                    .update(
-                        spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
-                        range=f"O{i+1}",
-                        valueInputOption="RAW",
-                        body={"range": f"O{i+1}", "values": [[str(thread.id)]]},
-                    )
-                )
-                request.execute()
+                # request = (
+                #     cfg.Config.service.spreadsheets()
+                #     .values()
+                #     .update(
+                #         spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
+                #         range=f"O{i+1}",
+                #         valueInputOption="RAW",
+                #         body={"range": f"O{i+1}", "values": [[str(thread.id)]]},
+                #     )
+                # )
+                # request.execute()
 
                 # Initialize status as "Pending"
-                request = (
-                    cfg.Config.service.spreadsheets()
-                    .values()
-                    .update(
-                        spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
-                        range=f"P{i+1}",
-                        valueInputOption="RAW",
-                        body={"range": f"P{i+1}", "values": [["Pending"]]},
-                    )
-                )
-                request.execute()
+                # request = (
+                #     cfg.Config.service.spreadsheets()
+                #     .values()
+                #     .update(
+                #         spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
+                #         range=f"P{i+1}",
+                #         valueInputOption="RAW",
+                #         body={"range": f"P{i+1}", "values": [["Pending"]]},
+                #     )
+                # )
+                # request.execute()
 
                 # Send notification to proposer
                 try:
@@ -237,6 +250,67 @@ class Proposals(Cog):
     @commands.check(cfg.is_mod_or_tech)
     async def potd_proposal(self, ctx):
         self.bot.loop.create_task(self.post_proposed_potd_task())
+
+    @commands.command(aliases=["myproposals"], brief="Checks your proposals.")
+    async def potd_myproposals(self, ctx, user_id: str = ""):
+        proposals = self.get_proposals()
+        print(user_id)
+        if not user_id:
+            user_id = str(ctx.author.id)
+        else:
+            if user_id.startswith("<@") and user_id.endswith(">"):
+                user_id = user_id[2:-1]
+            try:
+                _ = int(user_id)
+            except ValueError:
+                await ctx.send("Argument is not a user id!")
+                return
+        user_proposals = filter(lambda x: x[2] == user_id, proposals)
+
+        # construct output
+        output = "# __Your proposals__\n"
+        lines = []
+        for proposal in user_proposals:
+            line = ""
+
+            # parse timestamp
+            match = re.search(r"^(\d+)/(\d+)/(\d+) (\d+):(\d+):(\d+)$", proposal[0])
+            if match:
+                line += f"{match.group(3)}-{match.group(1):0>2}-{match.group(2):0>2}"
+            else:
+                line += "????-??-??"
+            
+            line += " · "
+
+            width = cfg.Config.config["proposal_source_width"]
+            line += f"{proposal[4]:<{width}.{width}}"
+
+            line += " · "
+
+            # if the proposal hasn't been registered yet, treat it as pending
+            if len(proposal) < 14 or proposal[13] == "":
+                line += "\x1b[2;33mPending\x1b[0m"
+            else:
+                if proposal[15] == "Pending":
+                    line += "\x1b[2;33mPending\x1b[0m"
+                elif proposal[15] == "Accepted":
+                    line += "\x1b[2;32mAccepted\x1b[0m"
+                elif proposal[15] == "Rejected":
+                    line += "\x1b[2;31mRejected\x1b[0m"
+                else:
+                    line += "Unknown"
+            
+            lines.append(line)
+        
+        if not lines:
+            output += "No results match your query."
+        else:
+            lines.sort()
+            output += "```ansi\n"
+            output += "\n".join(lines)
+            output += "```"
+
+        await ctx.send(output)
 
 
 async def setup(bot):
