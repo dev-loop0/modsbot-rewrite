@@ -7,12 +7,12 @@ from utils import potd_utils, split_utils
 
 import re
 
-from enum import IntEnum
+from enum import IntFlag
 
 Cog = commands.Cog
 
 
-class Status(IntEnum):
+class Status(IntFlag):
     PENDING = 1
     ACCEPTED = 2
     REJECTED = 4
@@ -265,7 +265,7 @@ class Proposals(Cog):
                 return Status.REJECTED
             else:
                 return Status.UNKNOWN
-
+    
     # manually invoke the proposal check
     @commands.command()
     @commands.check(cfg.is_mod_or_tech)
