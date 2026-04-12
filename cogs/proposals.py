@@ -55,20 +55,17 @@ class Proposal:
 
         if len(problem) < 14 or problem[13] == "":
             self.status = Status.PENDING
+        elif problem[15] == "Pending":
+            self.status = Status.PENDING
+        elif problem[15] == "Accepted":
+            self.status = Status.ACCEPTED
+        elif problem[15] == "Rejected":
+            self.status = Status.REJECTED
         else:
-            if problem[15] == "Pending":
-                self.status = Status.PENDING
-            elif problem[15] == "Accepted":
-                self.status = Status.ACCEPTED
-            elif problem[15] == "Rejected":
-                self.status = Status.REJECTED
-            else:
-                self.status = Status.UNKNOWN
+            self.status = Status.UNKNOWN
 
     def prettify(self) -> list:
-        output = []
-
-        output.append(f"{self.number:3}")
+        output = [f"{self.number:3}"]
 
         if self.timestamp is not None:
             output.append(self.timestamp.strftime("%Y-%m-%d"))
@@ -76,17 +73,17 @@ class Proposal:
             output.append("????-??-??")
 
         width = cfg.Config.config["proposal_source_width"]
-        output.append(f"{self.source:<{width}.{width}}")
-
-        output.append(
-            {
-                Status.PENDING: "\x1b[2;33mPending\x1b[0m",
-                Status.ACCEPTED: "\x1b[2;32mAccepted\x1b[0m",
-                Status.REJECTED: "\x1b[2;31mRejected\x1b[0m",
-                Status.UNKNOWN: "Unknown",
-            }[self.status]
+        output.extend(
+            (
+                f"{self.source:<{width}.{width}}",
+                {
+                    Status.PENDING: "\x1b[2;33mPending\x1b[0m",
+                    Status.ACCEPTED: "\x1b[2;32mAccepted\x1b[0m",
+                    Status.REJECTED: "\x1b[2;31mRejected\x1b[0m",
+                    Status.UNKNOWN: "Unknown",
+                }[self.status],
+            )
         )
-
         return output
 
 
@@ -324,15 +321,14 @@ class Proposals(Cog):
     def get_status(self, proposal: list):
         if len(proposal) < 14 or proposal[13] == "":
             return Status.PENDING
+        if proposal[15] == "Pending":
+            return Status.PENDING
+        elif proposal[15] == "Accepted":
+            return Status.ACCEPTED
+        elif proposal[15] == "Rejected":
+            return Status.REJECTED
         else:
-            if proposal[15] == "Pending":
-                return Status.PENDING
-            elif proposal[15] == "Accepted":
-                return Status.ACCEPTED
-            elif proposal[15] == "Rejected":
-                return Status.REJECTED
-            else:
-                return Status.UNKNOWN
+            return Status.UNKNOWN
 
     # manually invoke the proposal check
     @commands.command()
@@ -354,18 +350,18 @@ class Proposals(Cog):
         else:
             user_id = str(ctx.author.id)
 
-        proposals = []
-        for i, proposal in enumerate(self.get_proposals()):
-            proposals.append(Proposal(proposal, i))
-
-        user_proposals = list(filter(lambda x: x.user_id == user_id, proposals))
-
-        if not user_proposals:
-            await ctx.send("No results match your query.")
-        else:
+        proposals = [
+            Proposal(proposal, i)
+            for i, proposal in enumerate(self.get_proposals())
+        ]
+        if user_proposals := list(
+            filter(lambda x: x.user_id == user_id, proposals)
+        ):
             await self.bot.get_cog("MenuManager").new_filter_sort_menu(
                 ctx, user_proposals, page_type=PageType.TEXT
             )
+        else:
+            await ctx.send("No results match your query.")
 
 
 async def setup(bot):

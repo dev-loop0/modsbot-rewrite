@@ -61,12 +61,12 @@ class MenuManager(commands.Cog):
         if payload.user_id == self.bot.user.id:
             return
 
-        cur_menu = self.active_menus[payload.message_id]
-
-        message = cur_menu.message
-        user = payload.member
-
         if payload.message_id in self.active_menus:
+            cur_menu = self.active_menus[payload.message_id]
+
+            message = cur_menu.message
+            user = payload.member
+            
             if payload.emoji.name == "◀":
                 await cur_menu.previous_page(payload.user_id)
             elif payload.emoji.name == "⏹":
@@ -118,9 +118,9 @@ class MenuManager(commands.Cog):
         if payload.user_id == self.bot.user.id:
             return
 
-        cur_menu = self.active_menus[payload.message_id]
-
         if payload.message_id in self.active_menus:
+            cur_menu = self.active_menus[payload.message_id]
+
             if payload.emoji.name == "◀":
                 await cur_menu.previous_page(payload.user_id)
             elif payload.emoji.name == "⏹":
@@ -224,11 +224,9 @@ class FilterSortMenu(Menu):
         length = len(batches)
         if length >= 2:
             for i in range(length):
-                batches[i] = (
-                    batches[i] + f"\n\x1b[2;30mPage {i + 1}/{length}\x1b[0m\n```"
-                )
+                batches[i] = f"{batches[i]}\n\x1b[2;30mPage {i + 1}/{length}\x1b[0m\n```"
         else:
-            batches[0] = batches[0] + "\n```"
+            batches[0] += "\n```"
 
         batches[0] = "# __Your proposals__\n" + batches[0]
         self.pages = batches

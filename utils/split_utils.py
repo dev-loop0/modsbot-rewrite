@@ -9,7 +9,7 @@ def split_with_limit(text: str, delimiters: str, limit: int) -> list[str]:
     i = 0
     while True:
         if len(text) - cur <= limit:
-            sections.append(text[cur : len(text)])
+            sections.append(text[cur:])
             return sections
 
         jump = limit - 1
