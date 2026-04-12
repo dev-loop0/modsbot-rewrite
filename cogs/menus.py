@@ -66,7 +66,7 @@ class MenuManager(commands.Cog):
 
             message = cur_menu.message
             user = payload.member
-            
+
             if payload.emoji.name == "◀":
                 await cur_menu.previous_page(payload.user_id)
             elif payload.emoji.name == "⏹":
