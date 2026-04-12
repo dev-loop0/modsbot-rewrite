@@ -1,12 +1,10 @@
 import asyncio
+from enum import IntEnum
 
 import discord
 from discord.ext import commands
 
-import asyncio
-from enum import IntEnum
-
-from cogs.proposals import Status, SortType
+from cogs.proposals import SortType, Status
 
 
 class PageType(IntEnum):

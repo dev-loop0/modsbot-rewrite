@@ -574,6 +574,7 @@ class Potd(Cog):
                 # Category without difficulty
                 remaining.remove(i)
                 index = ["a", "c", "g", "n"].index(i[0])
+                # fmt: off
                 if result[1][4 * index] == "x":
                     result[1] = (
                         f"{result[1][:4 * index]}0 12{result[1][4 * index + 4:]}"
@@ -582,6 +583,7 @@ class Potd(Cog):
                     result[1] = (
                         f"{result[1][:4 * index]}xxxx{result[1][4 * index + 4:]}"
                     )
+                # fmt: on
             else:
                 # Category with difficulty
                 criterion = i[1:].split("-")

@@ -183,7 +183,8 @@ class Misc(Cog):
         else:
             await ctx.author.add_roles(role)
             await ctx.send(
-                "You are now locked in. Off-topic channels are now hidden. If you wish to leave this mode, run -lockout"
+                "You are now locked in. Off-topic channels are now hidden."
+                "If you wish to leave this mode, run -lockout"
             )
 
     @commands.command()
@@ -199,7 +200,7 @@ class Misc(Cog):
             await ctx.send("Focus role not found")
             return
 
-        if not role in ctx.author.roles:
+        if role not in ctx.author.roles:
             await ctx.send("You are already locked out!")
         else:
             await ctx.author.remove_roles(role)

@@ -1,13 +1,11 @@
 import asyncio
+from datetime import datetime
+from enum import IntFlag
 
 from discord.ext import commands
 
 from cogs import config as cfg
-from utils import potd_utils, split_utils
-
-from datetime import datetime
-
-from enum import IntFlag
+from utils import potd_utils
 
 Cog = commands.Cog
 
@@ -26,7 +24,7 @@ class SortType(IntFlag):
     DESCENDING = 0x10
 
 
-from cogs.menus import PageType
+from cogs.menus import PageType  # noqa: E402
 
 
 class Proposal:
