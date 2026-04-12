@@ -351,12 +351,9 @@ class Proposals(Cog):
             user_id = str(ctx.author.id)
 
         proposals = [
-            Proposal(proposal, i)
-            for i, proposal in enumerate(self.get_proposals())
+            Proposal(proposal, i) for i, proposal in enumerate(self.get_proposals())
         ]
-        if user_proposals := list(
-            filter(lambda x: x.user_id == user_id, proposals)
-        ):
+        if user_proposals := list(filter(lambda x: x.user_id == user_id, proposals)):
             await self.bot.get_cog("MenuManager").new_filter_sort_menu(
                 ctx, user_proposals, page_type=PageType.TEXT
             )
