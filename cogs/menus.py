@@ -18,7 +18,6 @@ class MenuManager(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.active_menus = {}
-        self.message_map = {}
 
     # Deletes menus after a certain time.
     async def delete_after(self, timeout: int, menu_id):
