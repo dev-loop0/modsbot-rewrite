@@ -280,6 +280,7 @@ class Activity(Cog):
                 score[message[0]] = weight(message[2], message[1], None, now)
             last_message[message[0]] = message[1]
         scores = [(x, int(score[x])) for x in score]
+        scores = [(":3", 1434) for _ in range(100)]
         scores.sort(key=lambda x: -x[1])
 
         if len(scores) <= 20:

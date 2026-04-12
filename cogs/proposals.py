@@ -5,7 +5,7 @@ from discord.ext import commands
 from cogs import config as cfg
 from utils import potd_utils, split_utils
 
-import re
+from datetime import datetime
 
 from enum import IntFlag
 
@@ -13,10 +13,83 @@ Cog = commands.Cog
 
 
 class Status(IntFlag):
-    PENDING = 1
-    ACCEPTED = 2
-    REJECTED = 4
-    UNKNOWN = 8
+    PENDING = 0x01
+    ACCEPTED = 0x02
+    REJECTED = 0x04
+    UNKNOWN = 0x08
+
+
+class SortType(IntFlag):
+    NUMBER = 0x00
+    SOURCE = 0x01
+    ASCENDING = 0x00
+    DESCENDING = 0x10
+
+
+from cogs.menus import PageType
+
+
+class Proposal:
+    def __init__(self, problem: list, number: int):
+        problem += [""] * min(0, 13 - len(problem))
+
+        self.number = number
+
+        try:
+            self.timestamp = datetime.strptime(problem[0], "%m/%d/%Y %H:%M:%S")
+        except ValueError:
+            self.timestamp = None
+
+        (
+            self.user,
+            self.user_id,
+            self.problem_statement,
+            self.source,
+            self.genre,
+            self.difficulty,
+            self.hint1,
+            self.hint2,
+            self.hint3,
+            self.proposer_msg,
+            self.solution,
+            self.solution_link,
+        ) = problem[1:13]
+
+        if len(problem) < 14 or problem[13] == "":
+            self.status = Status.PENDING
+        else:
+            if problem[15] == "Pending":
+                self.status = Status.PENDING
+            elif problem[15] == "Accepted":
+                self.status = Status.ACCEPTED
+            elif problem[15] == "Rejected":
+                self.status = Status.REJECTED
+            else:
+                self.status = Status.UNKNOWN
+
+    def prettify(self) -> list:
+        output = []
+
+        output.append(f"{self.number:3}")
+
+        if self.timestamp is not None:
+            output.append(self.timestamp.strftime("%Y-%m-%d"))
+        else:
+            output.append("????-??-??")
+
+        width = cfg.Config.config["proposal_source_width"]
+        output.append(f"{self.source:<{width}.{width}}")
+
+        output.append(
+            {
+                Status.PENDING: "\x1b[2;33mPending\x1b[0m",
+                Status.ACCEPTED: "\x1b[2;32mAccepted\x1b[0m",
+                Status.REJECTED: "\x1b[2;31mRejected\x1b[0m",
+                Status.UNKNOWN: "Unknown",
+            }[self.status]
+        )
+
+        return output
 
 
 class Proposals(Cog):
@@ -47,12 +120,9 @@ class Proposals(Cog):
         # Read from spreadsheet
         proposed_problems = self.get_proposals()
 
-        print(proposed_problems)
-
         for i, problem in enumerate(proposed_problems):
             # Find unposted problems
             if len(problem) < 14 or problem[13] == "":
-                print("pass", i, "succeeded")
                 number = i
                 user = problem[1]
                 user_id = problem[2]
@@ -265,7 +335,7 @@ class Proposals(Cog):
                 return Status.REJECTED
             else:
                 return Status.UNKNOWN
-    
+
     # manually invoke the proposal check
     @commands.command()
     @commands.check(cfg.is_mod_or_tech)
@@ -274,20 +344,8 @@ class Proposals(Cog):
 
     @commands.command(aliases=["myproposals"], brief="Checks your proposals.")
     async def potd_myproposals(self, ctx, *args):
-        short_flags = ""
-        long_flags = []
-        user_id = None
-        for argument in args:
-            if argument.startswith("--"):
-                long_flags.append(argument[2:])
-            elif argument.startswith("-"):
-                short_flags += argument[1:]
-            elif user_id is None:
-                user_id = argument
-
-        if user_id is None:
-            user_id = str(ctx.author.id)
-        else:
+        if args:
+            user_id = args[0]
             if user_id.startswith("<@") and user_id.endswith(">"):
                 user_id = user_id[2:-1]
             try:
@@ -295,94 +353,21 @@ class Proposals(Cog):
             except ValueError:
                 await ctx.send("Argument is not a user id!")
                 return
-
-        sort_by_number = "n" in short_flags or "number" in long_flags
-        sort_by_source = "s" in short_flags or "source" in long_flags
-        filter_pending = "p" in short_flags or "pending" in long_flags
-        filter_accepted = "a" in short_flags or "accepted" in long_flags
-        filter_rejected = "r" in short_flags or "rejected" in long_flags
-        sort_ascending = "A" in short_flags or "ascending" in long_flags
-        sort_descending = "D" in short_flags or "descending" in long_flags
-
-        if sort_by_number + sort_by_source == 0:
-            sort_by_number = True
-        elif sort_by_number + sort_by_source >= 2:
-            await ctx.send("Cannot sort by more than one field!")
-            return
-
-        proposals = enumerate(self.get_proposals())
-
-        mask = 0
-        if filter_pending + filter_accepted + filter_rejected == 0:
-            mask = Status.PENDING | Status.ACCEPTED | Status.REJECTED
-        if filter_pending:
-            mask |= Status.PENDING
-        if filter_accepted:
-            mask |= Status.ACCEPTED
-        if filter_rejected:
-            mask |= Status.REJECTED
-
-        if filter_pending + filter_accepted + filter_rejected == 0:
-            user_proposals = filter(lambda x: x[1][2] == user_id, proposals)
         else:
-            user_proposals = filter(
-                lambda x: x[1][2] == user_id and self.get_status(x[1]) & mask, proposals
-            )
+            user_id = str(ctx.author.id)
 
-        if sort_ascending + sort_descending == 0:
-            sort_ascending = True
-        elif sort_ascending + sort_descending >= 2:
-            await ctx.send(
-                "Cannot sort both in ascending order and in descending order!"
-            )
-            return
+        proposals = []
+        for i, proposal in enumerate(self.get_proposals()):
+            proposals.append(Proposal(proposal, i))
 
-        # construct output
-        lines = []
-        for proposal in user_proposals:
-            line = []
+        user_proposals = list(filter(lambda x: x.user_id == user_id, proposals))
 
-            line.append(f"{proposal[0]:3}")
-
-            # parse timestamp
-            match = re.search(r"^(\d+)/(\d+)/(\d+) (\d+):(\d+):(\d+)$", proposal[1][0])
-            if match:
-                line.append(
-                    f"{match.group(3)}-{match.group(1):0>2}-{match.group(2):0>2}"
-                )
-            else:
-                line.append("????-??-??")
-
-            width = cfg.Config.config["proposal_source_width"]
-            line.append(f"{proposal[1][4]:<{width}.{width}}")
-
-            line.append(
-                {
-                    Status.PENDING: "\x1b[2;33mPending\x1b[0m",
-                    Status.ACCEPTED: "\x1b[2;32mAccepted\x1b[0m",
-                    Status.REJECTED: "\x1b[2;31mRejected\x1b[0m",
-                    Status.UNKNOWN: "Unknown",
-                }[self.get_status(proposal[1])]
-            )
-
-            lines.append(line)
-
-        if not lines:
+        if not user_proposals:
             await ctx.send("No results match your query.")
         else:
-            # should already be sorted by number
-            if sort_by_source:
-                lines.sort(key=lambda x: x[2])
-            if sort_descending:
-                lines.reverse()
-            batches = split_utils.split_with_limit(
-                "\n".join([" · ".join(i) for i in lines]), "\n", 1900
+            await self.bot.get_cog("MenuManager").new_filter_sort_menu(
+                ctx, user_proposals, page_type=PageType.TEXT
             )
-            for i in range(len(batches)):
-                batches[i] = "```ansi\n" + batches[i] + "```"
-            batches[0] = "# __Your proposals__\n" + batches[0]
-            for batch in batches:
-                await ctx.send(batch)
 
 
 async def setup(bot):
