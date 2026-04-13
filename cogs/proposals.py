@@ -325,8 +325,8 @@ class Proposals(Cog):
     async def potd_proposal(self, ctx):
         self.bot.loop.create_task(self.post_proposed_potd_task())
 
-    @commands.command(aliases=["myproposals"], brief="Checks your proposals.")
-    async def potd_myproposals(self, ctx, *args):
+    @commands.command(aliases=["proposals"], brief="Checks your proposals.")
+    async def potd_proposals(self, ctx, *args):
         if args:
             user_id = args[0]
             if user_id.startswith("<@") and user_id.endswith(">"):
