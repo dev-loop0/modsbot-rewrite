@@ -146,7 +146,7 @@ class Proposals(Cog):
                     solution_link = problem[12]
                 except Exception:
                     solution_link = ""
-                print("trying to post...")
+
                 # Post in forum
                 forum = self.bot.get_channel(cfg.Config.config["potd_proposal_forum"])
                 content = (
@@ -173,7 +173,6 @@ class Proposals(Cog):
                 )
                 if proposer_msg not in ["", None]:
                     problem_info += f"\nProposer's message: {proposer_msg}\n"
-                print("hi")
                 await thread.send(problem_info)
                 await asyncio.sleep(10)
 
@@ -183,6 +182,7 @@ class Proposals(Cog):
                     f"||```latex\n{hint1}```||"
                 )
                 await asyncio.sleep(10)
+
                 if hint2 not in ["", None]:
                     await thread.send("Hint 2:")
                     await thread.send(
@@ -190,6 +190,7 @@ class Proposals(Cog):
                         f"||```latex\n{hint2}```||"
                     )
                     await asyncio.sleep(10)
+
                 if hint3 not in ["", None]:
                     await thread.send("Hint 3:")
                     await thread.send(
@@ -212,43 +213,43 @@ class Proposals(Cog):
                     await asyncio.sleep(10)
 
                 # Mark problem as posted
-                # request = (
-                #     cfg.Config.service.spreadsheets()
-                #     .values()
-                #     .update(
-                #         spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
-                #         range=f"N{i+1}",
-                #         valueInputOption="RAW",
-                #         body={"range": f"N{i+1}", "values": [["Y"]]},
-                #     )
-                # )
-                # request.execute()
+                request = (
+                    cfg.Config.service.spreadsheets()
+                    .values()
+                    .update(
+                        spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
+                        range=f"N{i+1}",
+                        valueInputOption="RAW",
+                        body={"range": f"N{i+1}", "values": [["Y"]]},
+                    )
+                )
+                request.execute()
 
                 # Mark thread ID
-                # request = (
-                #     cfg.Config.service.spreadsheets()
-                #     .values()
-                #     .update(
-                #         spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
-                #         range=f"O{i+1}",
-                #         valueInputOption="RAW",
-                #         body={"range": f"O{i+1}", "values": [[str(thread.id)]]},
-                #     )
-                # )
-                # request.execute()
+                request = (
+                    cfg.Config.service.spreadsheets()
+                    .values()
+                    .update(
+                        spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
+                        range=f"O{i+1}",
+                        valueInputOption="RAW",
+                        body={"range": f"O{i+1}", "values": [[str(thread.id)]]},
+                    )
+                )
+                request.execute()
 
                 # Initialize status as "Pending"
-                # request = (
-                #     cfg.Config.service.spreadsheets()
-                #     .values()
-                #     .update(
-                #         spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
-                #         range=f"P{i+1}",
-                #         valueInputOption="RAW",
-                #         body={"range": f"P{i+1}", "values": [["Pending"]]},
-                #     )
-                # )
-                # request.execute()
+                request = (
+                    cfg.Config.service.spreadsheets()
+                    .values()
+                    .update(
+                        spreadsheetId=cfg.Config.config["potd_proposal_sheet"],
+                        range=f"P{i+1}",
+                        valueInputOption="RAW",
+                        body={"range": f"P{i+1}", "values": [["Pending"]]},
+                    )
+                )
+                request.execute()
 
                 # Send notification to proposer
                 try:
@@ -317,18 +318,6 @@ class Proposals(Cog):
             )
         )
         request.execute()
-
-    def get_status(self, proposal: list):
-        if len(proposal) < 14 or proposal[13] == "":
-            return Status.PENDING
-        if proposal[15] == "Pending":
-            return Status.PENDING
-        elif proposal[15] == "Accepted":
-            return Status.ACCEPTED
-        elif proposal[15] == "Rejected":
-            return Status.REJECTED
-        else:
-            return Status.UNKNOWN
 
     # manually invoke the proposal check
     @commands.command()
