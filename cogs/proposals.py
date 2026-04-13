@@ -98,10 +98,6 @@ class Proposals(Cog):
     def post_proposed_potd(self):
         self.bot.loop.create_task(self.post_proposed_potd_task())
 
-    @commands.command(aliases=["idk"], brief="Checks proposals.")
-    async def check_proposals(self, ctx):
-        await self.post_proposed_potd_task()
-
     def get_proposals(self):
         return (
             cfg.Config.service.spreadsheets()
