@@ -84,6 +84,7 @@ class Proposal:
                 }[self.status],
             )
         )
+
         return output
 
 
@@ -114,45 +115,18 @@ class Proposals(Cog):
         for i, problem in enumerate(proposed_problems):
             # Find unposted problems
             if len(problem) < 14 or problem[13] == "":
-                number = i
-                user = problem[1]
-                user_id = problem[2]
-                problem_statement = problem[3]
-                source = problem[4]
-                genre = problem[5]
-                difficulty = problem[6]
-                hint1 = problem[7]
-                try:
-                    hint2 = problem[8]
-                except Exception:
-                    hint2 = ""
-                try:
-                    hint3 = problem[9]
-                except Exception:
-                    hint3 = ""
-                try:
-                    proposer_msg = problem[10]
-                except Exception:
-                    proposer_msg = ""
-                try:
-                    solution = problem[11]
-                except Exception:
-                    solution = ""
-                try:
-                    solution_link = problem[12]
-                except Exception:
-                    solution_link = ""
+                proposal = Proposal(problem, i)
 
                 # Post in forum
                 forum = self.bot.get_channel(cfg.Config.config["potd_proposal_forum"])
                 content = (
-                    f"POTD Proposal #{number} "
-                    f"from {user} <@!{user_id}> ({user_id})\n"
+                    f"POTD Proposal #{proposal.number} "
+                    f"from {proposal.user} <@!{proposal.user_id}> ({proposal.user_id})\n"
                     f"Problem Statement: ```latex\n"
-                    f"{problem_statement}\n```"
+                    f"{proposal.problem_statement}\n```"
                 )
                 post_result = await forum.create_thread(
-                    name=f"POTD Proposal #{number} from {user}",
+                    name=f"POTD Proposal #{proposal.number} from {proposal.user}",
                     content=content,
                     applied_tags=[
                         forum.get_tag(
@@ -163,48 +137,48 @@ class Proposals(Cog):
                 thread = post_result[0]
 
                 problem_info = (
-                    f"Source: ||{source}|| \n"
-                    + f"Genre: ||{genre}  || \n"
-                    + f"Difficulty: ||{difficulty}  ||"
+                    f"Source: ||{proposal.source}|| \n"
+                    + f"Genre: ||{proposal.genre}  || \n"
+                    + f"Difficulty: ||{proposal.difficulty}  ||"
                 )
-                if proposer_msg not in ["", None]:
-                    problem_info += f"\nProposer's message: {proposer_msg}\n"
+                if proposal.proposer_msg:
+                    problem_info += f"\nProposer's message: {proposal.proposer_msg}\n"
                 await thread.send(problem_info)
                 await asyncio.sleep(10)
 
                 await thread.send("Hint 1:")
                 await thread.send(
                     f"<@{cfg.Config.config['paradox_id']}> texsp\n"
-                    f"||```latex\n{hint1}```||"
+                    f"||```latex\n{proposal.hint1}```||"
                 )
                 await asyncio.sleep(10)
 
-                if hint2 not in ["", None]:
+                if proposal.hint2:
                     await thread.send("Hint 2:")
                     await thread.send(
                         f"<@{cfg.Config.config['paradox_id']}> texsp\n"
-                        f"||```latex\n{hint2}```||"
+                        f"||```latex\n{proposal.hint2}```||"
                     )
                     await asyncio.sleep(10)
 
-                if hint3 not in ["", None]:
+                if proposal.hint3:
                     await thread.send("Hint 3:")
                     await thread.send(
                         f"<@{cfg.Config.config['paradox_id']}> texsp\n"
-                        f"||```latex\n{hint3}```||"
+                        f"||```latex\n{proposal.hint3}```||"
                     )
                     await asyncio.sleep(10)
 
-                if solution not in ["", None]:
+                if proposal.solution:
                     await thread.send("Solution:")
                     await thread.send(
                         f"<@{cfg.Config.config['paradox_id']}> texsp\n"
-                        f"||```latex\n{solution}```||"
+                        f"||```latex\n{proposal.solution}```||"
                     )
                     await asyncio.sleep(10)
 
-                if solution_link not in ["", None]:
-                    solution_link_msg = f"\nSolution link: {solution_link}\n"
+                if proposal.solution_link:
+                    solution_link_msg = f"\nSolution link: {proposal.solution_link}\n"
                     await thread.send(solution_link_msg)
                     await asyncio.sleep(10)
 
@@ -250,10 +224,10 @@ class Proposals(Cog):
                 # Send notification to proposer
                 try:
                     guild = self.bot.get_guild(cfg.Config.config["mods_guild"])
-                    member = guild.get_member(int(user_id))
+                    member = guild.get_member(int(proposal.user_id))
                     if member is not None and not member.bot:
                         await member.send(
-                            f"Hi! We have received your POTD Proposal `{source}`. "
+                            f"Hi! We have received your POTD Proposal `{proposal.source}`. "
                             "Thanks for your submission!"
                         )
                 except Exception as e:
